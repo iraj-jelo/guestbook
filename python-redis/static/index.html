@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Guestbook</title>
+
+    <link
+      rel="stylesheet"
+      href="css/bootstrap.min.css">
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+    <h2>Guestbook</h2>
+
+    <div class="mb-3">
+
+        <input
+            id="message"
+            class="form-control"
+            placeholder="Message">
+
+    </div>
+
+    <button
+        class="btn btn-primary"
+        onclick="submitMessage()">
+
+        Submit
+
+    </button>
+
+    <hr>
+
+    <ul id="messages" class="list-group">
+    </ul>
+
+</div>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
