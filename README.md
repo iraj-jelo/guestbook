@@ -12,37 +12,38 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 
 ```bash
 kind create cluster --name guestbook-cluster --config kind-cluster.yaml
+kubectl create namespace guestbook
 ```
 
-Build a docker image for Guestbook frontend application (`gb-frontend`):
+Build a docker image for Guestbook frontend application (`guestbook`):
 
 ```bash
-cd python-redis && docker build --target runtime -t gb-frontend:v1 .
+cd python-redis && docker build --target runtime -t irajjelodari/guestbook:1.0.0 .
 ```
 
 Load docker images (Redis and gb-frontend) into your cluster nodes:
 
 ```bash
-kind load docker-image 'redis:8.2.2' --name=guestbook-cluster
-kind load docker-image 'gb-frontend:v1' --name=guestbook-cluster
+kind load docker-image 'redis:8.8.2' --name=guestbook-cluster
+kind load docker-image 'irajjelodari/guestbook:1.0.0' --name=guestbook-cluster
 ```
 
 Apply the manifests:
 
 ```bash
-kubectl apply -f redis-leader-deployment.yaml
-kubectl apply -f redis-leader-service.yaml
+kubectl apply -n guestbook -f redis-leader-deployment.yaml
+kubectl apply -n guestbook -f redis-leader-service.yaml
 
-kubectl apply -f redis-follower-deployment.yaml
-kubectl apply -f redis-follower-service.yaml
+kubectl apply -n guestbook -f redis-follower-deployment.yaml
+kubectl apply -n guestbook -f redis-follower-service.yaml
 
-kubectl apply -f frontend-deployment.yaml
-kubectl apply -f frontend-service.yaml
+kubectl apply -n guestbook -f frontend-deployment.yaml
+kubectl apply -n guestbook -f frontend-service.yaml
 ```
 
 Expose the frontend service using `port-forward` command to access the application on your local machine:
 ```bash
-kubectl port-forward service/frontend 8542:80
+kubectl port-forward -n guestbook service/frontend 8542:8000
 ```
 
 ![Guestbook application screenshot](screenshot.png)
@@ -52,10 +53,12 @@ kubectl port-forward service/frontend 8542:80
 To clean up everything:
 
 ```bash
-kubectl delete deployment -l app=redis
-kubectl delete service -l app=redis
-kubectl delete deployment frontend
-kubectl delete service frontend
+kubectl delete -n guestbook deployment -l app=redis
+kubectl delete -n guestbook service -l app=redis
+kubectl delete -n guestbook deployment frontend
+kubectl delete -n guestbook service frontend
+
+kubectl delete namespace guestbook
 
 kind delete cluster --name guestbook-cluster
 ```
