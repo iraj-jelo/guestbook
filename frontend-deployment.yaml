@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
       - name: python-redis
-        image: gb-frontend:v1
+        image: irajjelodari/guestbook:1.0.0
         imagePullPolicy: IfNotPresent
         env:
         - name: GET_HOSTS_FROM
