@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
       - name: leader
-        image: "redis:8.2.2"
+        image: "redis:8.8.2"
         imagePullPolicy: IfNotPresent
         resources:
           requests:
