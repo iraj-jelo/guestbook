@@ -1,0 +1,17 @@
+# overlays/prod/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: guestbook-prod
+labels:
+  - pairs:
+      environment: prod
+    includeSelectors: true
+replicas:
+  - name: frontend
+    count: 3
+  - name: redis-leader
+    count: 1
+  - name: redis-follower
+    count: 3

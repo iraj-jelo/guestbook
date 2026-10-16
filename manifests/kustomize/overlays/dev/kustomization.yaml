@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: guestbook-dev
+labels:
+  - pairs:
+      environment: dev
+    includeSelectors: true
+replicas:
+  - name: frontend
+    count: 1
+  - name: redis-leader
+    count: 1
+  - name: redis-follower
+    count: 1
+resources:
+  - ../../base

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: guestbook-staging
+labels:
+  - pairs:
+      environment: staging
+    includeSelectors: true
+replicas:
+  - name: frontend
+    count: 2
+  - name: redis-leader
+    count: 1
+  - name: redis-follower
+    count: 2
