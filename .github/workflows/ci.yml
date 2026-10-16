@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        working-directory: python-redis
+        run: python -m pip install -r requirements.txt
+
+      - name: Check Python syntax
+        working-directory: python-redis
+        run: python -m compileall -q .
+
+  container:
+    name: Build frontend image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./python-redis
+          file: ./python-redis/Dockerfile
+          target: runtime
+          push: false
+
+  manifests:
+    name: Validate ${{ matrix.environment }} manifests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, staging, prod]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Lint Helm chart
+        run: helm lint ./guestbookchart --values ./guestbookchart/values-${{ matrix.environment }}.yaml
+
+      - name: Render Helm chart
+        run: helm template guestbook ./guestbookchart --namespace guestbook-${{ matrix.environment }} --values ./guestbookchart/values-${{ matrix.environment }}.yaml
+
+      - name: Build Kustomize overlay
+        run: kubectl kustomize ./kustomize/overlays/${{ matrix.environment }}
+
+      - name: Build Helm-backed Kustomize overlay
+        run: kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone ./helm-kustomize/overlays/${{ matrix.environment }}
