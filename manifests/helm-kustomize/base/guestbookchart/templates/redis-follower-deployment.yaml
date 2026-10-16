@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-follower
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: redis
+    role: follower
+    tier: backend
+spec:
+  replicas: {{ .Values.redis.followerReplicas }}
+  selector:
+    matchLabels:
+      app: redis
+      role: follower
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: follower
+        tier: backend
+    spec:
+      containers:
+        - name: follower
+          image: {{ .Values.redis.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - redis-server
+            - --replicaof
+            - redis-leader
+            - "6379"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP

@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+nameSuffix: -staging
+namespace: guestbook-staging
+resources:
+  - ../../base
+helmGlobals:
+  chartHome: ../../base
+helmCharts:
+- name: guestbookchart
+  releaseName: guestbook-staging
+  namespace: guestbook-staging
+  valuesFile: values-staging.yaml # staging/values-staging.yaml
