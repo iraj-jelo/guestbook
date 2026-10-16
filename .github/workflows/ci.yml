@@ -69,13 +69,13 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       - name: Lint Helm chart
-        run: helm lint ./guestbookchart --values ./guestbookchart/values-${{ matrix.environment }}.yaml
+        run: helm lint ./manifests/guestbookchart --values ./manifests/guestbookchart/values-${{ matrix.environment }}.yaml
 
       - name: Render Helm chart
-        run: helm template guestbook ./guestbookchart --namespace guestbook-${{ matrix.environment }} --values ./guestbookchart/values-${{ matrix.environment }}.yaml
+        run: helm template guestbook ./manifests/guestbookchart --namespace guestbook-${{ matrix.environment }} --values ./manifests/guestbookchart/values-${{ matrix.environment }}.yaml
 
       - name: Build Kustomize overlay
-        run: kubectl kustomize ./kustomize/overlays/${{ matrix.environment }}
+        run: kubectl kustomize ./manifests/kustomize/overlays/${{ matrix.environment }}
 
       - name: Build Helm-backed Kustomize overlay
-        run: kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone ./helm-kustomize/overlays/${{ matrix.environment }}
+        run: kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone ./manifests/helm-kustomize/overlays/${{ matrix.environment }}
