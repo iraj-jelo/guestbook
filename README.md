@@ -11,12 +11,6 @@ This a application is based on a [Google](https://docs.cloud.google.com/kubernet
 You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your cluster. for creating a dev cluster using kind read [creating a cluster](./docs/creating-cluster.md).
 
 
-First create a namespace for our application
-
-```sh
-kubectl create namespace guestbook
-```
-
 Build a docker image for Guestbook frontend application (`guestbook`):
 
 ```sh
@@ -30,38 +24,46 @@ kind load docker-image 'redis:8.8.2' --name=guestbook-cluster
 kind load docker-image 'irajjelodari/guestbook:1.0.0' --name=guestbook-cluster
 ```
 
-Apply the manifests:
+Install the Helm chart (it creates the `guestbook` namespace):
 
 ```sh
-kubectl apply -n guestbook -f redis-leader-deployment.yaml
-kubectl apply -n guestbook -f redis-leader-service.yaml
-
-kubectl apply -n guestbook -f redis-follower-deployment.yaml
-kubectl apply -n guestbook -f redis-follower-service.yaml
-
-kubectl apply -n guestbook -f frontend-deployment.yaml
-kubectl apply -n guestbook -f frontend-service.yaml
+helm install guestbook ./guestbookchart --namespace guestbook --create-namespace
 ```
 
-Expose the frontend service using `port-forward` command to access the application on your local machine:
+To deploy with Kustomize overlays that render the Helm chart for dev, staging, or prod, see [helm-kustomize](./helm-kustomize/README.md).
+
+The chart defaults match the base manifests. To use the replica counts from an environment overlay, pass its values file and namespace, for example:
 
 ```sh
-kubectl port-forward -n guestbook service/frontend 8542:8000
+helm install guestbook ./guestbookchart \
+  --namespace guestbook-dev \
+  --create-namespace \
+  --values ./guestbookchart/values-dev.yaml
 ```
+
+Use `values-staging.yaml` or `values-prod.yaml` for the other overlays. To access the application locally, forward the frontend service:
+
+```sh
+kubectl port-forward -n guestbook service/frontend 8542:80
+```
+
+Then open http://localhost:8542.
 
 ![Guestbook application screenshot](screenshot.png)
 
+### Continuous integration
+
+The GitHub Actions workflow runs on pushes and pull requests. It checks Python
+dependencies and syntax, builds the frontend Docker image without publishing
+it, and lints and renders the Helm and Kustomize configurations for dev,
+staging, and prod.
+
 ### Clean-up
 
-To clean up everything:
+To remove the Helm release and clean up the namespace:
 
 ```sh
-kubectl delete -n guestbook deployment -l app=redis
-kubectl delete -n guestbook service -l app=redis
-kubectl delete -n guestbook deployment frontend
-kubectl delete -n guestbook service frontend
-
+helm uninstall guestbook -n guestbook
 kubectl delete namespace guestbook
-
 kind delete cluster --name guestbook-cluster
 ```
