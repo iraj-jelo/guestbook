@@ -1,0 +1,5 @@
+frontend:
+  replicas: 2
+
+redis:
+  followerReplicas: 2
