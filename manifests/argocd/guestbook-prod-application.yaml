@@ -8,9 +8,25 @@ spec:
   source:
     repoURL: https://github.com/iraj-jelo/guestbook.git
     targetRevision: main
-    path: helm-kustomize/overlays/prod
+    path: manifests/helm-kustomize/overlays/prod
     kustomize:
       enableHelm: true
   destination:
     server: https://kubernetes.default.svc
     namespace: guestbook-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  info:
+  - name: Documentation
+    value: https://github.com/iraj-jelo/guestbook
