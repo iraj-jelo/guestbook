@@ -71,7 +71,7 @@ jobs:
           # Pin to a recent kubectl so bundled kustomize is recent and compatible with Helm v3
           version: 'latest'
 
-      - name: Debug: print tool versions
+      - name: Debug (print tool versions)
         run: |
           echo "--- tool versions ---"
           echo "kubectl:"; kubectl version --client --short || true
