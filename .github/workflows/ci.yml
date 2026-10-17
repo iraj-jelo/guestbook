@@ -67,6 +67,16 @@ jobs:
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
+        with:
+          # Pin to a recent kubectl so bundled kustomize is recent and compatible with Helm v3
+          version: 'v1.37.1'
+
+      - name: Debug (print tool versions)
+        run: |
+          echo "--- tool versions ---"
+          echo "kubectl:"; kubectl version --client || true
+          echo "helm:"; helm version --short || true
+          echo "kubectl kustomize availability:"; kubectl kustomize --help >/dev/null 2>&1 && echo "available" || echo "not available"
 
       - name: Lint Helm chart
         run: helm lint ./manifests/guestbookchart --values ./manifests/guestbookchart/values-${{ matrix.environment }}.yaml
