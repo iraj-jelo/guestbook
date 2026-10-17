@@ -74,7 +74,7 @@ jobs:
       - name: Debug (print tool versions)
         run: |
           echo "--- tool versions ---"
-          echo "kubectl:"; kubectl version --client --short || true
+          echo "kubectl:"; kubectl version --client || true
           echo "helm:"; helm version --short || true
           echo "kubectl kustomize availability:"; kubectl kustomize --help >/dev/null 2>&1 && echo "available" || echo "not available"
 
