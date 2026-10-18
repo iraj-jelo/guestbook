@@ -7,8 +7,10 @@ spec:
   project: default
   source:
     repoURL: https://github.com/iraj-jelo/guestbook.git
-    targetRevision: dev
+    targetRevision: development
     path: manifests/helm-kustomize/overlays/dev
+    # path: manifests/guestbookchart/overlays/dev
+    # path: manifests/kustomize/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: guestbook-dev
