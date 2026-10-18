@@ -4,6 +4,8 @@
 
 This a application is based on a [Google](https://docs.cloud.google.com/kubernetes-engine/docs/tutorials/guestbook) and [kubernetes](https://kubernetes.io/docs/tutorials/stateless-application/guestbook/) samples with PHP but overwritten with Python and few minor changes in deployments, services manifests to make it easier working with local Redis and frontend application images.
 
+The frontend exposes `GET /health` for Kubernetes liveness and readiness probes.
+
 ![diagram](diagram.png)
 
 ### creating a cluster
