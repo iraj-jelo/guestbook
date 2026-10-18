@@ -56,9 +56,9 @@ Then open http://localhost:8542.
 ### Continuous integration
 
 The GitHub Actions workflow runs on pushes and pull requests. It checks Python
-dependencies and syntax, builds the frontend Docker image without publishing
-it, and lints and renders the Helm and Kustomize configurations for dev,
-staging, and prod.
+syntax and API behavior with mocked Redis, builds the frontend Docker image
+without publishing it, and lints and renders the Helm and Kustomize
+configurations for dev, staging, and prod.
 
 ### Clean-up
 
