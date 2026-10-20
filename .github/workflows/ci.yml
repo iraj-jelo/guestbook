@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches:
       - main
@@ -21,14 +22,55 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python || steps.full.outputs.python }}
+      container: ${{ steps.filter.outputs.container || steps.full.outputs.container }}
+      manifests: ${{ steps.filter.outputs.manifests || steps.full.outputs.manifests }}
+    steps:
+      - name: Check out repository
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Filter changed paths
+        id: filter
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            python:
+              - 'python-redis/**'
+              - '.github/workflows/**'
+            container:
+              - 'python-redis/**'
+              - '.github/workflows/**'
+            manifests:
+              - 'manifests/**'
+              - '.github/workflows/**'
+
+      - name: Run all checks for manual and release runs
+        id: full
+        if: github.event_name != 'push' && github.event_name != 'pull_request'
+        run: |
+          echo "python=true" >> "$GITHUB_OUTPUT"
+          echo "container=true" >> "$GITHUB_OUTPUT"
+          echo "manifests=true" >> "$GITHUB_OUTPUT"
+
   python:
     name: Python checks
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -53,6 +95,8 @@ jobs:
 
   container:
     name: Build frontend image
+    needs: changes
+    if: needs.changes.outputs.container == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -71,6 +115,8 @@ jobs:
 
   manifests:
     name: Validate ${{ matrix.environment }} manifests
+    needs: changes
+    if: needs.changes.outputs.manifests == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

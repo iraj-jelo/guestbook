@@ -58,7 +58,34 @@ Then open http://localhost:8542.
 The GitHub Actions workflow runs on pushes and pull requests. It checks Python
 syntax and API behavior with mocked Redis, builds the frontend Docker image
 without publishing it, and lints and renders the Helm and Kustomize
-configurations for dev, staging, and prod.
+configurations for dev, staging, and prod. It runs only the checks relevant to
+changed paths: Python changes run Python checks and the image build, manifest
+changes run manifest validation, and workflow changes run all checks. Manual
+and release-triggered runs execute all checks.
+
+### Releases
+
+Publishing a GitHub release with a `vMAJOR.MINOR.PATCH` tag (optionally followed
+by a prerelease suffix, such as `-rc.1`) runs the release workflow after all CI
+checks pass. Configure the repository secrets `DOCKERHUB_USERNAME` and
+`DOCKERHUB_TOKEN` with credentials that can push to
+`irajjelodari/guestbook`.
+
+The workflow publishes the versioned image with BuildKit provenance and an
+SBOM, signs its digest with Cosign keyless signing, and opens a pull request
+updating all frontend manifests to that immutable digest. Review and merge that
+pull request to deploy the release; the manifests do not rely on a mutable
+`latest` tag.
+
+To verify an image pinned in a manifest, set `IMAGE_DIGEST` to its full
+`sha256:...` digest and run:
+
+```sh
+cosign verify \
+  --certificate-identity-regexp '^https://github\.com/iraj-jelo/guestbook/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  "irajjelodari/guestbook@${IMAGE_DIGEST}"
+```
 
 ### Clean-up
 
