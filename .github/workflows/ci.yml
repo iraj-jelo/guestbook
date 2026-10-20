@@ -2,7 +2,21 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - '**/*.md'
+      - 'diagram.png'
+      - 'screenshot.png'
   pull_request:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - '**/*.md'
+      - 'diagram.png'
+      - 'screenshot.png'
   workflow_dispatch:
 
 permissions:
