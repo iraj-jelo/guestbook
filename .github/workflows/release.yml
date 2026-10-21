@@ -76,7 +76,7 @@ jobs:
         run: cosign sign --yes "${IMAGE}@${DIGEST}"
 
   update-manifests:
-    name: Propose digest-pinned manifest update
+    name: Propose versioned manifest update
     needs: publish
     runs-on: ubuntu-latest
     permissions:
@@ -91,7 +91,8 @@ jobs:
       - name: Update frontend image references
         env:
           IMAGE: ${{ needs.publish.outputs.image }}
-          DIGEST: ${{ needs.publish.outputs.digest }}
+          VERSION: ${{ needs.publish.outputs.version }}
+          # DIGEST: ${{ needs.publish.outputs.digest }}  # Restore when switching back to digest-pinned manifests.
         run: |
           python - <<'PY'
           import os
@@ -99,11 +100,15 @@ jobs:
           import re
 
           image = os.environ["IMAGE"]
-          digest = os.environ["DIGEST"]
-          if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
-              raise SystemExit(f"Invalid image digest: {digest}")
+          version = os.environ["VERSION"]
+          semver = r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?"
+          if not re.fullmatch(semver, version):
+              raise SystemExit(f"Invalid semantic version: {version}")
 
-          replacement = f"{image}@{digest}"
+          replacement = f"{image}:{version}"
+          image_pattern = re.compile(
+              re.escape(image) + rf"(?::{semver}|@sha256:[0-9a-f]{{64}})"
+          )
           paths = (
               Path("manifests/kustomize/base/frontend-deployment.yaml"),
               Path("manifests/guestbookchart/values.yaml"),
@@ -111,11 +116,7 @@ jobs:
           )
           for path in paths:
               content = path.read_text(encoding="utf-8")
-              updated, count = re.subn(
-                  r"irajjelodari/guestbook(?::[^\s\"']+|@sha256:[0-9a-f]{64})",
-                  replacement,
-                  content,
-              )
+              updated, count = image_pattern.subn(replacement, content)
               if count != 1:
                   raise SystemExit(f"Expected one frontend image in {path}, found {count}")
               path.write_text(updated, encoding="utf-8")
@@ -150,9 +151,9 @@ jobs:
           body: |
             Update all frontend deployment manifests to the image built for release `${{ github.event.release.tag_name }}`.
 
-            Image: `${{ needs.publish.outputs.image }}@${{ needs.publish.outputs.digest }}`
+            Image: `${{ needs.publish.outputs.image }}:${{ needs.publish.outputs.version }}`
 
-            The release workflow generated BuildKit provenance and an SBOM, and signed this digest with Cosign keyless signing.
+            The release workflow generated BuildKit provenance and an SBOM, and signed the image digest with Cosign keyless signing.
           add-paths: |
             manifests/kustomize/base/frontend-deployment.yaml
             manifests/guestbookchart/values.yaml

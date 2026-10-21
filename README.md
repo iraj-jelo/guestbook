@@ -150,22 +150,6 @@ checks pass. Configure the repository secrets `DOCKERHUB_USERNAME` and
 `DOCKERHUB_TOKEN` with credentials that can push to
 `irajjelodari/guestbook`.
 
-The workflow publishes the versioned image with BuildKit provenance and an
-SBOM, signs its digest with Cosign keyless signing, and opens a pull request
-updating all frontend manifests to that immutable digest. Review and merge that
-pull request to deploy the release; the manifests do not rely on a mutable
-`latest` tag.
-
-To verify an image pinned in a manifest, set `IMAGE_DIGEST` to its full
-`sha256:...` digest and run:
-
-```sh
-cosign verify \
-  --certificate-identity-regexp '^https://github\.com/iraj-jelo/guestbook/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  "irajjelodari/guestbook@${IMAGE_DIGEST}"
-```
-
 ### Clean-up
 
 To remove the Helm release and clean up the namespace:
