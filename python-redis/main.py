@@ -24,6 +24,11 @@ logger = logging.getLogger("fastapi_app")
 logging.info(f"Get hosts from {os.getenv('GET_HOSTS_FROM', 'env')}")
 
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
 def redis_leader():
     host = os.getenv(
         "REDIS_LEADER_SERVICE_HOST",
