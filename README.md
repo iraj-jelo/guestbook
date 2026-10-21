@@ -149,13 +149,3 @@ by a prerelease suffix, such as `-rc.1`) runs the release workflow after all CI
 checks pass. Configure the repository secrets `DOCKERHUB_USERNAME` and
 `DOCKERHUB_TOKEN` with credentials that can push to
 `irajjelodari/guestbook`.
-
-### Clean-up
-
-To remove the Helm release and clean up the namespace:
-
-```sh
-helm uninstall guestbook -n guestbook
-kubectl delete namespace guestbook
-kind delete cluster --name guestbook-cluster
-```
