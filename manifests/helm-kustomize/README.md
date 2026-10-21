@@ -10,13 +10,13 @@ Requirements: `kubectl` with Kustomize support and Helm installed.
 Build an environment's manifests:
 
 ```sh
-kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone helm-kustomize/overlays/dev
+kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone manifests/helm-kustomize/overlays/dev
 ```
 
 Apply an environment:
 
 ```sh
-kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone helm-kustomize/overlays/dev | kubectl apply -f -
+kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone manifests/helm-kustomize/overlays/dev | kubectl apply -f -
 ```
 
 Use `staging` or `prod` in place of `dev` to build or apply the other
