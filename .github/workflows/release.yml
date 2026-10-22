@@ -138,6 +138,12 @@ jobs:
           image_pattern = re.compile(
               re.escape(image) + rf"(?::{semver}|@sha256:[0-9a-f]{{64}})"
           )
+
+          print(f'--- image: {image} ---')
+          print(f'--- version: {version} ---')
+          print(f'--- replacement: {replacement} ---')
+          print(f'--- image_pattern: {image_pattern} ---')
+
           paths = (
               Path("manifests/kustomize/base/frontend-deployment.yaml"),
               Path("manifests/guestbookchart/values.yaml"),
@@ -146,7 +152,7 @@ jobs:
           for path in paths:
               content = path.read_text(encoding="utf-8")
               updated, count = image_pattern.subn(replacement, content)
-              print(f'--- {path} ---')
+              print(f'--- path: {path} ---')
               print(content)
               if count != 1:
                   raise SystemExit(f"Expected one frontend image in {path}, found {count}")
