@@ -39,6 +39,18 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
     steps:
+      - name: Validate release tag
+        id: release
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tag must be vMAJOR.MINOR.PATCH with an optional prerelease suffix." >&2
+            exit 1
+          fi
+          echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+
       - name: debug inputs and outputs
         env:
           image_input: ${{ inputs.docker_image }}
@@ -52,18 +64,8 @@ jobs:
           echo "--- tag_input=${tag_input} ---"
           echo "--- digest=${digest} ---"
           echo "--- image=${image} ---"
+          echo "--- tag=${tag} ---"
           echo "-- version=${version} ---"
-      - name: Validate release tag
-        id: release
-        env:
-          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
-        run: |
-          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Release tag must be vMAJOR.MINOR.PATCH with an optional prerelease suffix." >&2
-            exit 1
-          fi
-          echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Check out release
         uses: actions/checkout@v4
