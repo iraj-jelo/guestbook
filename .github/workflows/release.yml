@@ -39,6 +39,20 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
     steps:
+      - name: debug inputs and outputs
+        env:
+          image_input: ${{ inputs.docker_image }}
+          tag_input: ${{ inputs.tag }}
+          digest: ${{ steps.build.outputs.digest }}
+          image: ${{ steps.image.outputs.name }}
+          tag: ${{ steps.release.outputs.tag }}
+          version: ${{ steps.release.outputs.version }}
+        run: |
+          echo "--- image_input=${image_input} ---"
+          echo "--- tag_input=${tag_input} ---"
+          echo "--- digest=${digest} ---"
+          echo "--- image=${image} ---"
+          echo "-- version=${version} ---"
       - name: Validate release tag
         id: release
         env:
