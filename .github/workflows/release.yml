@@ -11,6 +11,11 @@ on:
         description: Optional Docker image reference to use instead of building and pushing a new image
         required: false
         type: string
+      run_ci:
+        description: Whether to call the CI workflow
+        required: false
+        default: false
+        type: boolean
   release:
     types:
       - published
@@ -22,6 +27,7 @@ jobs:
   validate:
     name: Run CI checks
     uses: ./.github/workflows/ci.yml
+    if: ${{ inputs.run_ci }}
     permissions:
       contents: read
       pull-requests: read
