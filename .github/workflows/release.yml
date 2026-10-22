@@ -146,6 +146,8 @@ jobs:
           for path in paths:
               content = path.read_text(encoding="utf-8")
               updated, count = image_pattern.subn(replacement, content)
+              print(f'--- {path} ---')
+              print(content)
               if count != 1:
                   raise SystemExit(f"Expected one frontend image in {path}, found {count}")
               path.write_text(updated, encoding="utf-8")
