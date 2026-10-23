@@ -9,7 +9,8 @@ on:
         type: string
       build_image:
         description: Optional Docker image reference to use instead of building and pushing a new image
-        required: true
+        required: false
+        default: true
         type: boolean
       run_ci:
         description: Whether to call the CI workflow
@@ -132,10 +133,10 @@ jobs:
           IMAGE: irajjelodari/guestbook
           VERSION: ${{ needs.publish.outputs.version }}
         run: |
-          escaped_image=$(echo "$IMAGE" | sed 's/\//\\\//g')
-          sed -E  's/(escaped_image):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g' -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
-          sed -E  's/(escaped_image):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g' -i "manifests/kustomize/base/frontend-deployment.yaml"
-          sed -E  's/(escaped_image):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g' -i "manifests/guestbookchart/values.yaml"
+          ESCAPED_IMAGE=$(echo "$IMAGE" | sed 's/\//\\\//g')
+          sed -E  's/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g' -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
+          sed -E  's/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g' -i "manifests/kustomize/base/frontend-deployment.yaml"
+          sed -E  's/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g' -i "manifests/guestbookchart/values.yaml"
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
