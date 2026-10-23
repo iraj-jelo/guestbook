@@ -84,9 +84,10 @@ jobs:
         env:
           DOCKER_IMAGE: ${{ inputs.docker_image }}
         run: |
+          echo "--- DOCKER_IMAGE=$DOCKER_IMAGE ---"
           if [[ -n "${DOCKER_IMAGE}" ]]; then
-            IMAGE_REF="${DOCKER_IMAGE%@*}"
-            IMAGE_REF="${IMAGE_REF%:*}"
+            IMAGE_REF="${IMAGE_REF%%:*}"
+            echo "--- IMAGE_REF=${IMAGE_REF} ---"
             echo "name=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           else
             echo "name=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
@@ -130,6 +131,7 @@ jobs:
   update-manifests:
     name: Propose versioned manifest update
     needs: publish
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
