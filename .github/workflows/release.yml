@@ -167,12 +167,12 @@ jobs:
         with:
           base: dev
           branch: automation/release-image-${{ needs.publish.outputs.tag }}
-          commit-message: "Update Guestbook image to ${{ needs.publish.outputs.tag }}"
-          title: "Update Guestbook image to ${{ needs.publish.outputs.tag }}"
+          commit-message: "Update Guestbook (dev) image to ${{ needs.publish.outputs.tag }}"
+          title: "Update Guestbook (dev) image to ${{ needs.publish.outputs.tag }}"
           body: |
             Update all frontend deployment manifests to the image built for release `${{ needs.publish.outputs.tag }}`.
 
-            Image: `${{ needs.publish.outputs.image }}:${{ needs.publish.outputs.version }}`
+            Image: `${{ needs.publish.outputs.image_name }}:${{ needs.publish.outputs.version }}`
 
             The release workflow generated BuildKit provenance and an SBOM, and signed the image digest with Cosign keyless signing.
           add-paths: |
