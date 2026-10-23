@@ -7,6 +7,7 @@ on:
       - main
       - dev
     paths-ignore:
+      - .gtihub/workflows/*
       - '**/*.md'
       - 'diagram.png'
       - 'screenshot.png'

@@ -87,7 +87,7 @@ jobs:
           echo "--- DOCKER_IMAGE=\"${DOCKER_IMAGE}\" ---"
           if [[ -n "${DOCKER_IMAGE}" ]]; then
             IMAGE_REF="${IMAGE_REF%%:*}"
-            echo "--- IMAGE_REF=\"${IMAGE_REF}\"" ---"
+            echo "--- IMAGE_REF=\"${IMAGE_REF}\" ---"
             echo "name=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           else
             echo "name=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
