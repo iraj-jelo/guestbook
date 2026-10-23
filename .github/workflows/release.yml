@@ -43,7 +43,7 @@ jobs:
       id-token: write
     outputs:
       digest: ${{ steps.build.outputs.digest }}
-      image: ${{ steps.image.outputs.name }}
+      image_name: ${{ steps.image.outputs.image_name }}
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
     steps:
@@ -79,6 +79,11 @@ jobs:
         with:
           ref: ${{ steps.release.outputs.tag }}
 
+      - name: Set image name
+        id: image
+        run: |
+          echo "image_name=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
+    
       - name: Set up Docker Buildx
         if: ${{ inputs.build_image }}
         uses: docker/setup-buildx-action@v3
@@ -130,7 +135,7 @@ jobs:
 
       - name: Update frontend image references
         env:
-          IMAGE: irajjelodari/guestbook
+          IMAGE: ${{ needs.publish.outputs.image_name }}
           VERSION: ${{ needs.publish.outputs.version }}
         run: |
           ESCAPED_IMAGE=$(echo "$IMAGE" | sed 's/\//\\\//g')
@@ -160,7 +165,7 @@ jobs:
       - name: Create manifest update pull request
         uses: peter-evans/create-pull-request@v7
         with:
-          base: main
+          base: dev
           branch: automation/release-image-${{ needs.publish.outputs.tag }}
           commit-message: "Update Guestbook image to ${{ needs.publish.outputs.tag }}"
           title: "Update Guestbook image to ${{ needs.publish.outputs.tag }}"
