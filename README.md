@@ -8,6 +8,9 @@ The frontend exposes `GET /health` for Kubernetes liveness and readiness probes.
 
 ![diagram](diagram.png)
 
+![argocd](argocd1.png)
+![argocd](argocd2.png)
+
 ## Installation
 
 Run the commands from the repository root. You need a Kubernetes cluster and
