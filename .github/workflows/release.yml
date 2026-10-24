@@ -130,8 +130,15 @@ jobs:
     steps:
       - name: Check out main
         uses: actions/checkout@v4
+        if: ${{ github.ref_name == 'main' || github.ref_name == 'master' ||  !contains(github.ref_name, 'dev') }}
         with:
           ref: main
+
+      - name: Check out dev
+        uses: actions/checkout@v4
+        if: ${{ github.ref_name == 'dev' || contains(github.ref_name, 'dev') }}
+        with:
+          ref: dev
 
       - name: Debug publish outputs
         env:
@@ -145,15 +152,18 @@ jobs:
           echo "IMAGE_ENV='${IMAGE}'"
           echo "VERSION_ENV='${VERSION}'"
           echo "TAG_ENV='${TAG}'"
+          echo "ref_name='${{ github.ref_name }}'"
 
       - name: Update frontend image references
         env:
           IMAGE: ${{ needs.publish.outputs.image }}
           VERSION: ${{ needs.publish.outputs.version }}
         run: |
-          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
-          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
-          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/guestbookchart/values.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+[-a-zA-Z0-9]*/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+[-a-zA-Z0-9]*/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+[-a-zA-Z0-9]*/\1:${VERSION}/g" -i "manifests/guestbookchart/values.yaml"
+
+          cat "manifests/guestbookchart/values.yaml"
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
