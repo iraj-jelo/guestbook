@@ -1,6 +1,6 @@
 frontend:
   replicas: 3
-  image: irajjelodari/guestbook:1.0.0
+  image: irajjelodari/guestbook:1.1.0-dev
   serviceType: LoadBalancer
 
 redis:
