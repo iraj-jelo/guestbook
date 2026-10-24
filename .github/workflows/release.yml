@@ -7,10 +7,16 @@ on:
         description: Release tag to build (for example, v1.1.0)
         required: false
         type: string
-      docker_image:
+      build_image:
         description: Optional Docker image reference to use instead of building and pushing a new image
         required: false
-        type: string
+        default: true
+        type: boolean
+      run_ci:
+        description: Whether to call the CI workflow
+        required: false
+        default: true
+        type: boolean
   release:
     types:
       - published
@@ -22,6 +28,7 @@ jobs:
   validate:
     name: Run CI checks
     uses: ./.github/workflows/ci.yml
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ci }}
     permissions:
       contents: read
       pull-requests: read
@@ -29,13 +36,14 @@ jobs:
   publish:
     name: Build and sign release image
     needs: validate
+    if: ${{ !cancelled() && !failure() }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     outputs:
       digest: ${{ steps.build.outputs.digest }}
-      image: ${{ steps.image.outputs.name }}
+      image: ${{ steps.image.outputs.image }}
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
     steps:
@@ -51,6 +59,21 @@ jobs:
           echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
+      - name: debug inputs and outputs
+        env:
+          image_input: ${{ inputs.build_image }}
+          tag_input: ${{ inputs.tag }}
+          digest: ${{ steps.build.outputs.digest }}
+          image: ${{ steps.image.outputs.image }}
+          tag: ${{ steps.release.outputs.tag }}
+          version: ${{ steps.release.outputs.version }}
+        run: |
+          echo "--- tag_input=${tag_input} ---"
+          echo "--- digest=${digest} ---"
+          echo "--- image=${image} ---"
+          echo "--- tag=${tag} ---"
+          echo "-- version=${version} ---"
+
       - name: Check out release
         uses: actions/checkout@v4
         with:
@@ -58,30 +81,22 @@ jobs:
 
       - name: Set image name
         id: image
-        env:
-          DOCKER_IMAGE: ${{ inputs.docker_image }}
         run: |
-          if [[ -n "${DOCKER_IMAGE}" ]]; then
-            IMAGE_REF="${DOCKER_IMAGE%@*}"
-            IMAGE_REF="${IMAGE_REF%:*}"
-            echo "name=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
-          fi
-
+          echo "image=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
+    
       - name: Set up Docker Buildx
-        if: ${{ inputs.docker_image == '' }}
+        if: ${{ inputs.build_image }}
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
-        if: ${{ inputs.docker_image == '' }}
+        if: ${{ inputs.build_image }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push release image
-        if: ${{ inputs.docker_image == '' }}
+        if: ${{ inputs.build_image }}
         id: build
         uses: docker/build-push-action@v6
         with:
@@ -94,11 +109,11 @@ jobs:
           sbom: true
 
       - name: Install Cosign
-        if: ${{ inputs.docker_image == '' }}
+        if: ${{ inputs.build_image }}
         uses: sigstore/cosign-installer@v3
 
       - name: Sign image digest
-        if: ${{ inputs.docker_image == '' }}
+        if: ${{ inputs.build_image }}
         env:
           IMAGE: ${{ steps.image.outputs.name }}
           DIGEST: ${{ steps.build.outputs.digest }}
@@ -107,6 +122,7 @@ jobs:
   update-manifests:
     name: Propose versioned manifest update
     needs: publish
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -121,35 +137,12 @@ jobs:
         env:
           IMAGE: ${{ needs.publish.outputs.image }}
           VERSION: ${{ needs.publish.outputs.version }}
-          # DIGEST: ${{ needs.publish.outputs.digest }}  # Restore when switching back to digest-pinned manifests.
         run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-          import re
-
-          image = os.environ["IMAGE"]
-          version = os.environ["VERSION"]
-          semver = r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?"
-          if not re.fullmatch(semver, version):
-              raise SystemExit(f"Invalid semantic version: {version}")
-
-          replacement = f"{image}:{version}"
-          image_pattern = re.compile(
-              re.escape(image) + rf"(?::{semver}|@sha256:[0-9a-f]{{64}})"
-          )
-          paths = (
-              Path("manifests/kustomize/base/frontend-deployment.yaml"),
-              Path("manifests/guestbookchart/values.yaml"),
-              Path("manifests/helm-kustomize/base/guestbookchart/values.yaml"),
-          )
-          for path in paths:
-              content = path.read_text(encoding="utf-8")
-              updated, count = image_pattern.subn(replacement, content)
-              if count != 1:
-                  raise SystemExit(f"Expected one frontend image in {path}, found {count}")
-              path.write_text(updated, encoding="utf-8")
-          PY
+          ESCAPED_IMAGE=$(echo "$IMAGE" | sed 's#\/#\\/#g')
+          echo "--- ESCAPED_IMAGE = $ESCAPED_IMAGE ---"
+          sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
+          sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
+          sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/guestbookchart/values.yaml"
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -170,13 +163,33 @@ jobs:
             kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone "./manifests/helm-kustomize/overlays/${environment}"
           done
 
-      - name: Create manifest update pull request
+      - name: Create manifest update pull request with dev branch as base
         uses: peter-evans/create-pull-request@v7
+        if: ${{ github.ref_name == 'dev' || contains(github.ref_name, 'dev') }}
+        with:
+          base: dev
+          branch: automation/release-image-${{ needs.publish.outputs.tag }}
+          commit-message: "Update Guestbook (dev) image to ${{ needs.publish.outputs.tag }}"
+          title: "Update Guestbook (dev) image to ${{ needs.publish.outputs.tag }}"
+          body: |
+            Update all frontend deployment manifests to the image built for release `${{ needs.publish.outputs.tag }}`.
+
+            Image: `${{ needs.publish.outputs.image }}:${{ needs.publish.outputs.version }}`
+
+            The release workflow generated BuildKit provenance and an SBOM, and signed the image digest with Cosign keyless signing.
+          add-paths: |
+            manifests/kustomize/base/frontend-deployment.yaml
+            manifests/guestbookchart/values.yaml
+            manifests/helm-kustomize/base/guestbookchart/values.yaml
+
+      - name: Create manifest update pull request with main branch as base
+        uses: peter-evans/create-pull-request@v7
+        if: ${{ github.ref_name == 'main' || github.ref_name == 'master' ||  !contains(github.ref_name, 'dev') }}
         with:
           base: main
           branch: automation/release-image-${{ needs.publish.outputs.tag }}
-          commit-message: "Update Guestbook image to ${{ needs.publish.outputs.tag }}"
-          title: "Update Guestbook image to ${{ needs.publish.outputs.tag }}"
+          commit-message: "Update Guestbook (prod) image to ${{ needs.publish.outputs.tag }}"
+          title: "Update Guestbook (prod) image to ${{ needs.publish.outputs.tag }}"
           body: |
             Update all frontend deployment manifests to the image built for release `${{ needs.publish.outputs.tag }}`.
 
