@@ -67,7 +67,7 @@ jobs:
       - name: Set image name
         id: image
         run: |
-          echo "image=irajjelodari\/guestbook" >> "$GITHUB_OUTPUT"
+          echo "image=guestbook" >> "$GITHUB_OUTPUT"
     
       - name: debug inputs and outputs
         env:
