@@ -67,7 +67,7 @@ jobs:
       - name: Set image name
         id: image
         run: |
-          printf '%s\n' "image=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
+          echo "image=guestbook" >> "$GITHUB_OUTPUT"
     
       - name: debug inputs and outputs
         env:
@@ -151,12 +151,9 @@ jobs:
           IMAGE: ${{ needs.publish.outputs.image }}
           VERSION: ${{ needs.publish.outputs.version }}
         run: |
-          ESCAPED_IMAGE=$(echo "$IMAGE" | sed 's#\/#\\/#g')
-          echo "--- IMAGE = $IMAGE ---"
-          echo "--- ESCAPED_IMAGE = $ESCAPED_IMAGE ---"
-          sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
-          sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
-          sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/guestbookchart/values.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/guestbookchart/values.yaml"
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
