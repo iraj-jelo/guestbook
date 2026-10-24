@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/iraj-jelo/guestbook.git
-    targetRevision: development
+    targetRevision: dev
     path: manifests/helm-kustomize/overlays/dev
     # path: manifests/guestbookchart/overlays/dev
     # path: manifests/kustomize/overlays/dev
