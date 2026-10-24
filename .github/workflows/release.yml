@@ -151,9 +151,9 @@ jobs:
           IMAGE: ${{ needs.publish.outputs.image }}
           VERSION: ${{ needs.publish.outputs.version }}
         run: |
-          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
-          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
-          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/guestbookchart/values.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+[-a-zA-Z0-9]*/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+[-a-zA-Z0-9]*/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
+          sed -E  "s/(${IMAGE}):[0-9]+.[0-9]+.[0-9]+[-a-zA-Z0-9]*/\1:${VERSION}/g" -i "manifests/guestbookchart/values.yaml"
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
