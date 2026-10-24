@@ -67,7 +67,7 @@ jobs:
       - name: Set image name
         id: image
         run: |
-          echo "image='irajjelodari/guestbook'" >> "$GITHUB_OUTPUT"
+          echo "image=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
     
       - name: debug inputs and outputs
         env:
@@ -104,7 +104,7 @@ jobs:
           file: ./python-redis/Dockerfile
           target: runtime
           push: true
-          tags: ${{ steps.image.outputs.name }}:${{ steps.release.outputs.version }}
+          tags: ${{ steps.image.outputs.image }}:${{ steps.release.outputs.version }}
           provenance: mode=max
           sbom: true
 
@@ -115,7 +115,7 @@ jobs:
       - name: Sign image digest
         if: ${{ inputs.build_image }}
         env:
-          IMAGE: ${{ steps.image.outputs.name }}
+          IMAGE: ${{ steps.image.outputs.image }}
           DIGEST: ${{ steps.build.outputs.digest }}
         run: cosign sign --yes "${IMAGE}@${DIGEST}"
 
