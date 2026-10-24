@@ -59,6 +59,16 @@ jobs:
           echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
+      - name: Check out release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+
+      - name: Set image name
+        id: image
+        run: |
+          echo "image='irajjelodari/guestbook'" >> "$GITHUB_OUTPUT"
+    
       - name: debug inputs and outputs
         env:
           image_input: ${{ inputs.build_image }}
@@ -74,16 +84,6 @@ jobs:
           echo "--- tag=${tag} ---"
           echo "-- version=${version} ---"
 
-      - name: Check out release
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.release.outputs.tag }}
-
-      - name: Set image name
-        id: image
-        run: |
-          echo "image=irajjelodari/guestbook" >> "$GITHUB_OUTPUT"
-    
       - name: Set up Docker Buildx
         if: ${{ inputs.build_image }}
         uses: docker/setup-buildx-action@v3
@@ -139,6 +139,7 @@ jobs:
           VERSION: ${{ needs.publish.outputs.version }}
         run: |
           ESCAPED_IMAGE=$(echo "$IMAGE" | sed 's#\/#\\/#g')
+          echo "--- IMAGE = $IMAGE ---"
           echo "--- ESCAPED_IMAGE = $ESCAPED_IMAGE ---"
           sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/helm-kustomize/base/guestbookchart/values.yaml"
           sed -E  "s/(${ESCAPED_IMAGE}):[0-9]+.[0-9]+.[0-9]+/\1:${VERSION}/g" -i "manifests/kustomize/base/frontend-deployment.yaml"
