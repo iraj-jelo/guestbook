@@ -133,6 +133,19 @@ jobs:
         with:
           ref: main
 
+      - name: Debug publish outputs
+        env:
+          IMAGE: ${{ needs.publish.outputs.image }}
+          VERSION: ${{ needs.publish.outputs.version }}
+          TAG: ${{ needs.publish.outputs.tag }}
+        run: |
+          echo "needs.publish.outputs.image='${{ needs.publish.outputs.image }}'"
+          echo "needs.publish.outputs.version='${{ needs.publish.outputs.version }}'"
+          echo "needs.publish.outputs.tag='${{ needs.publish.outputs.tag }}'"
+          echo "IMAGE_ENV='${IMAGE}'"
+          echo "VERSION_ENV='${VERSION}'"
+          echo "TAG_ENV='${TAG}'"
+
       - name: Update frontend image references
         env:
           IMAGE: ${{ needs.publish.outputs.image }}
