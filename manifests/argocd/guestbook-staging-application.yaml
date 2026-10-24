@@ -9,8 +9,6 @@ spec:
     repoURL: https://github.com/iraj-jelo/guestbook.git
     targetRevision: main
     path: manifests/helm-kustomize/overlays/staging
-    kustomize:
-      enableHelm: true
   destination:
     server: https://kubernetes.default.svc
     namespace: guestbook-staging
